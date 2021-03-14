@@ -1,5 +1,6 @@
 # Telegram contests 2019 - TON blockchain
 
+This is some researches by the TON blockchain.
 The task was to build smart contracts for a blockchain platform:
 
 1. Build one or more smart contracts as described in TON Contest.txt below.
