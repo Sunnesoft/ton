@@ -9,10 +9,10 @@ The task was to build smart contracts for a blockchain platform:
 # Contest.txt:
 
 1. Smart-contract implementation contest
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
 
 1.1. General information
-~~~~~~~~~~~~~~~~~~~~~~~~
+---
 
 The goal is to implement at least one of the smart contracts listed below in 1.2. for the TON Blockchain, using the tools provided in the TON Blockchain distribution (cf. https://github.com/ton-blockchain/ton ), especially the Fift interpreter (its sources are located in the subdirectory `crypto/fift` in the source tree; the corresponding binary file is usually located as `crypto/fift` in the build directory) and the FunC compiler (its sources are located in the subdirectory `crypto/func` in the source tree; the corresponding binary is usually located as `crypto/func` with respect to the build directory). Some examples of smart contracts are located in the subdirectory `crypto/smartcont` in the source tree. In most cases, the FunC source code of a smart contract is located in a file with the suffix `.fc`; another file with the same name with the suffix `.fif` is automatically generated from the source file by invoking the `func` binary with appropriate command line options. This automatically-generated file contains TVM assembly instructions, which, when interpreted by the Fift assembler (a TON VM assembler implemented in Fift), generate the code of the smart contract in binary form.
 
@@ -29,7 +29,7 @@ The quality of the source code of your implementation of the smart contract (i.e
 All smart contracts are to follow the TON Smart contract guidelines ( https://test.ton.org/smguidelines.txt ) as closely as possible. Some general information on the TON Blockchain and the way smart contracts are invoked may be found in the TON Blockchain documentation ( https://test.ton.org/tblkch.pdf ).
 
 1.2. List of smart contracts to be implemented
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
 
 You are expected to implement at least one of the smart contracts listed below. You can implement several of them. Notice, however, that submitting poor implementations of several smartcontracts from this list is less likely to earn you a prize than submitting the best implementation (among the submissions of all participants) of just one smart contract. On the other hand, given enough submissions in each category, there may be prizes independently allocated in each of them, and you might win several prizes by submitting several good smart contracts.
 
@@ -42,7 +42,7 @@ You are expected to implement at least one of the smart contracts listed below. 
 Notice that implementing one of these smart contracts may simplify the implementation of the others (e.g., by reusing code).
 
 1.3. Separate comments on each of the smart contracts
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
 
 1) A multi-signature wallet typically contains a list of *n* 256-bit (Ed25519) public keys in its persistent data, along with a sequence number, parameters *n* and *k* (0 < k <= n <= 100), and possibly a list of partially signed orders (that have at least one, but less than *k* valid signatures). Each order has an expiration Unix time, so that if it is still unsigned after expiration, it can never be sent even if missing signatures arrive. Your smart contract can garbage collect such expired orders the next time it is invoked. New orders are created by receiving external messages containing several (at least one) valid signatures, the expiration time, and the proposed internal message body (which will be sent once the order collects enough signatures). If a new order has at least *k* valid signatures from the very beginning, it is executed immediately (i.e., the included internal message is sent immediately from the multisig wallet smart contract to the intended destination). Otherwise it is stored in the persistent data of the smart contract. Such partially signed orders may accumulate more signatures when other external new order messages with the same body but different signature sets arrive.
 
@@ -61,12 +61,12 @@ In most cases, the persistent data of a TON DNS Resolver smart contract contains
 A payment channel consists not only of a smart contract, but also of an off-chain network protocol used to communicate data related to the "virtual blockchain" between the two parties involved. You do not have to implement a full-fledged network protocol over ADNL in this task. Instead, you have to write Fift scripts that will generate outbound "network" messages as files and read inbound "network" messages from other files, with their filenames passed as command line arguments. The files themselves might be communicated between the two parties in any fashion (e.g., by email).
 
 2. FunC / TON VM improvement contest
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
 
 If you have implemented at least one smart contract in the previous contest, you can participate in the FunC / TON VM improvement contest, by suggesting a patch to the FunC and/or TON VM sources, and writing a better (shorter or more expressive) implementation of the same smart contract using the newly-added FunC features (to be enabled by a special command-line option `-X` of the FunC executable). This implementation will be compared with the original implementation of the same smart contract by the same participant. A short description of the suggested (and implemented) improvement is also expected.
 
 3. TON Blockchain bug bounty contest
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
 
 If you find a bug in the TON Blockchain, you can submit its description and a suggested scenario of its exploitation to participate in the TON Blockchain bug bounty contest. If you manage to actually exploit this bug in the test network ("testnet") of the TON Blockchain (e.g., by stealing some funds from the wallet of another person) and attach an explanation (and proof) with your bug description, you are likely to obtain a larger prize (up to $200,000 in addition to the $200,000 prize fund distributed among smart contract developers).
 
