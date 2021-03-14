@@ -1,0 +1,40 @@
+#!/usr/bin/env fift -s
+"TonUtil.fif" include
+"Asm.fif" include
+
+// "key1.pk" load-generate-keypair constant wallet_pk1
+// "key2.pk" load-generate-keypair constant wallet_pk2
+
+"key1.pk" load-privkey constant wallet_pk1
+"key2.pk" load-privkey constant wallet_pk2
+
+wallet_pk1 priv>pub constant wallet_pubk1
+wallet_pk2 priv>pub constant wallet_pubk2
+
+wallet_pk1 Bx. cr
+wallet_pubk1 Bx. cr
+wallet_pk2 Bx. cr 
+wallet_pubk2 Bx. cr
+
+dictnew
+<b 0 32 u, b> <s wallet_pubk1 256 B>u@ 2 roll 256 .s udict!
+{ abort"Fault push pair to dict" } ifnot 
+
+<b 2342 32 u, wallet_pubk1 256 B>u@ 256 u, swap dict, <b b{01} s, b> ref, b> 
+dup ."signing message: " <s csr. cr
+dup hashu wallet_pk1 ed25519_sign_uint Bx. cr
+
+"multisig-wallet-code.fif" include // dict codec
+
+.s
+cr 
+
+<b 2342 32 u, b> // dict codec data
+swap // dict data codec
+dup <s // dict data codec codes
+-1 // dict data codec codes 85143
+swap // dict data codec 85143 codes
+4 roll // dict data codec 85143 codes 
+.s runvm .s
+
+<b newkeypair B, b> <s csr. cr

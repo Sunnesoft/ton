@@ -1,0 +1,56 @@
+#!/usr/bin/env fift -s
+"TonUtil.fif" include
+"SCUtil.fif" include
+
+{ ."usage: " @' $0 type ." <mode> <in-filename-base> <out-filename-base>" cr
+  ."Creates/merge (<mode>: 1 for create | 0 for merge) public keys file <out-filename-base>.pbk by/with <in-filename-base>(.pk/.pbk) "
+  ."If mode = 2 generate private key <in-filename-base>.pk and public key <out-filename-base>.pbk" cr 1 halt
+} : usage
+$# 3 - ' usage if
+
+$1 parse-int =: mode
+$2 =: input-filebase
+$3 =: output-filebase
+
+// fn
+{ input-filebase +".pk" load-cryptokey 
+  priv>pub output-filebase +".pbk" B>file
+  ."(Saved public key to file " output-filebase +".pbk" type .")" cr
+} : create-pbk-from-pk
+
+// do not use it
+{
+	0 256 u>B swap 
+	256 { swap 256 u>B 2 roll swap B+ true } dictforeach
+	drop
+	32 B|
+	output-filebase +".pbk" B>file
+} : store-pbk
+
+// dirty hack
+{
+	dictnew input-filebase +".pbk" load-pbk 
+	byte-pbk
+	dictnew output-filebase +".pbk" load-pbk
+	byte-pbk
+	B+
+	output-filebase +".pbk" B>file
+	dictnew output-filebase +".pbk" load-pbk
+	byte-pbk
+	output-filebase +".pbk" B>file
+	."(Saved list of public keys to file " output-filebase +".pbk" type .")" cr
+} : merge-pbk
+
+{
+	newkeypair output-filebase +".pbk" B>file 
+	input-filebase +".pk" B>file
+	."(Saved public key to file " output-filebase +".pbk" type .")" cr
+	."(Saved private key to file " input-filebase +".pk" type .")" cr
+} : gen-keys
+
+
+0 mode = { merge-pbk } if
+1 mode = { create-pbk-from-pk } if
+2 mode = { gen-keys } if
+
+bye

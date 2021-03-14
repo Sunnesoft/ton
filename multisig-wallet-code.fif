@@ -1,0 +1,498 @@
+// automatically generated from `d:/projects/ton/crypto/smartcont/stdlib.fc` `d:/projects/ton/crypto/smartcont/multisig-wallet-code.fc` 
+PROGRAM{
+  DECLPROC get_pk?
+  DECLPROC get_order?
+  DECLPROC unpack_order
+  DECLPROC pack_orderb
+  DECLPROC pack_order
+  DECLPROC ~set_order_to_dict
+  DECLPROC ~del_order_from_dict
+  DECLPROC update_perst_data
+  DECLPROC get_perst_data
+  DECLPROC unpack_in_msg
+  DECLPROC unpack_in_msg_body
+  DECLPROC pack_in_msg_body
+  DECLPROC ~push_sign_dict
+  DECLPROC check_sign_dict
+  DECLPROC ~merge_sign_dict
+  DECLPROC send_internal_message
+  DECLPROC is_cell_equal
+  DECLPROC recv_external
+  DECLPROC recv_internal
+  107331 DECLMETHOD seqnom
+  115684 DECLMETHOD pending_orders_all
+  103571 DECLMETHOD pending_orders
+  get_pk? PROC:<{
+    //  dict pk
+    8 PUSHPOW2	//  dict pk _2=256
+    s1 s2 XCHG	//  pk dict _2=256
+    DICTUGET
+    NULLSWAPIFNOT	//  _4 _5
+  }>
+  get_order? PROC:<{
+    //  dict it_seqno
+    32 PUSHINT	//  dict it_seqno _2=32
+    s1 s2 XCHG	//  it_seqno dict _2=32
+    DICTUGET
+    NULLSWAPIFNOT	//  _4 _5
+  }>
+  unpack_order PROC:<{
+    //  order
+    //  od
+    32 LDU	//  _3 od
+    LDREF	//  _3 _6 od
+    32 LDU	//  _3 _6 _8 od
+    LDDICT	//  _3 _6 _8 _11 od
+    1 LDI	//  _3 _6 _8 _11 _30 _29
+    DROP	//  res res res res res
+  }>
+  pack_orderb PROC:<{
+    //  expiration_time message_body sign_count sign_dict status
+    NEWC	//  expiration_time message_body sign_count sign_dict status _5
+    s1 s5 XCHG	//  status message_body sign_count sign_dict expiration_time _5
+    32 STU	//  status message_body sign_count sign_dict _7
+    s1 s3 XCHG	//  status sign_dict sign_count message_body _7
+    STREF	//  status sign_dict sign_count _8
+    32 STU	//  status sign_dict _10
+    STDICT	//  status _11
+    1 STI	//  _13
+  }>
+  pack_order PROC:<{
+    //  expiration_time message_body sign_count sign_dict status
+    pack_orderb CALLDICT	//  _5
+    ENDC	//  _6
+  }>
+  ~set_order_to_dict PROC:<{
+    //  dict it_seqno expiration_time message_body sign_count sign_dict status
+    pack_orderb CALLDICT	//  dict it_seqno order
+    32 PUSHINT	//  dict it_seqno order _10=32
+    s1 s3 XCHG	//  order it_seqno dict _10=32
+    DICTUSETB	//  dict
+  }>
+  ~del_order_from_dict PROC:<{
+    //  dict it_seqno
+    32 PUSHINT	//  dict it_seqno _3=32
+    s1 s2 XCHG	//  it_seqno dict _3=32
+    DICTUDEL	//  _5 _6
+    DROP	//  dict
+  }>
+  update_perst_data PROC:<{
+    //  it_seqno pk_count min_agree_count pk_dict order_dict
+    NEWC	//  it_seqno pk_count min_agree_count pk_dict order_dict _5
+    s1 s5 XCHG	//  order_dict pk_count min_agree_count pk_dict it_seqno _5
+    32 STU	//  order_dict pk_count min_agree_count pk_dict _7
+    s1 s3 XCHG	//  order_dict pk_dict min_agree_count pk_count _7
+    32 STU	//  order_dict pk_dict min_agree_count _9
+    32 STU	//  order_dict pk_dict _11
+    STDICT	//  order_dict _12
+    STDICT	//  _13
+    ENDC	//  _14
+    c4 POP
+  }>
+  get_perst_data PROC:<{
+    // 
+    c4 PUSH	//  _1
+    CTOS	//  ds
+    32 LDU	//  _4 ds
+    32 LDU	//  _4 _7 ds
+    32 LDU	//  _4 _7 _10 ds
+    LDDICT	//  _4 _7 _10 _13 ds
+    LDDICT	//  res res res res res ds
+    ENDS
+  }>
+  unpack_in_msg PROC:<{
+    //  in_msg
+    //  od
+    9 PUSHPOW2	//  od _3=512
+    LDSLICEX	//  _2 od
+    LDDICT	//  _2 _5 od
+    LDREF	//  _2 _5 _15 _14
+    DROP	//  _2 _5 _7
+    CTOS	//  _2 _5 _9
+  }>
+  unpack_in_msg_body PROC:<{
+    //  in_msg
+    //  od
+    32 LDU	//  _2 od
+    32 LDU	//  _2 _5 od
+    256 LDU	//  _2 _5 _8 od
+    LDREF	//  _2 _5 _8 _20 _19
+    DROP	//  _2 _5 _8 _11
+  }>
+  pack_in_msg_body PROC:<{
+    //  it_seqno expiration_time pk message_body
+    NEWC	//  it_seqno expiration_time pk message_body _4
+    s1 s4 XCHG	//  message_body expiration_time pk it_seqno _4
+    32 STU	//  message_body expiration_time pk _6
+    s1 s2 XCHG	//  message_body pk expiration_time _6
+    32 STU	//  message_body pk _8
+    256 STU	//  message_body _10
+    STREF	//  _11
+  }>
+  ~push_sign_dict PROC:<{
+    //  sign_dict pk signature
+    NEWC	//  sign_dict pk signature _6
+    SWAP	//  sign_dict pk _6 signature
+    STSLICER	//  sign_dict pk _7
+    8 PUSHPOW2	//  sign_dict pk _7 _8=256
+    s1 s3 XCHG	//  _7 pk sign_dict _8=256
+    DICTUSETGETB
+    NULLSWAPIFNOT	//  _14 _15 _16
+    NIP	//  sign_dict f
+    IFJMP:<{	//  sign_dict
+      1 PUSHINT	//  sign_dict _10=1
+    }>	//  sign_dict
+    0 PUSHINT	//  sign_dict _11=0
+  }>
+  check_sign_dict PROC:<{
+    //  sign_dict in_msg_body
+    0 PUSHINT	//  sign_dict in_msg_body n=0
+    -1 PUSHINT	//  sign_dict in_msg_body n=0 pubkey=-1
+    NEWDICT	//  sign_dict in_msg_body n=0 pubkey=-1 tmpdict
+    UNTIL:<{
+      8 PUSHPOW2	//  sign_dict in_msg_body n pubkey tmpdict _10=256
+      s1 s2 XCHG
+      s5 PUSH
+      SWAP	//  sign_dict in_msg_body n tmpdict pubkey sign_dict _10=256
+      DICTUGETNEXT
+      NULLSWAPIFNOT
+      NULLSWAPIFNOT	//  sign_dict in_msg_body n tmpdict cs pubkey f
+      DUP	//  sign_dict in_msg_body n tmpdict cs pubkey f f
+      IF:<{	//  sign_dict in_msg_body n tmpdict cs pubkey f
+        9 PUSHPOW2	//  sign_dict in_msg_body n tmpdict cs pubkey f _14=512
+        s1 s3 XCHG	//  sign_dict in_msg_body n tmpdict f pubkey cs _14=512
+        LDSLICEX	//  sign_dict in_msg_body n tmpdict f pubkey _26 _25
+        DROP	//  sign_dict in_msg_body n tmpdict f pubkey signature
+        s5 PUSH	//  sign_dict in_msg_body n tmpdict f pubkey signature in_msg_body
+        HASHSU	//  sign_dict in_msg_body n tmpdict f pubkey signature _16
+        OVER
+        s3 PUSH	//  sign_dict in_msg_body n tmpdict f pubkey signature _16 signature pubkey
+        CHKSIGNU	//  sign_dict in_msg_body n tmpdict f pubkey signature _17
+        IF:<{	//  sign_dict in_msg_body n tmpdict f pubkey signature
+          s1 s3 XCHG
+          s3 PUSH
+          SWAP	//  sign_dict in_msg_body n pubkey f tmpdict pubkey signature
+          ~push_sign_dict CALLDICT	//  sign_dict in_msg_body n pubkey f tmpdict _18
+          s1 s4 XCHG	//  sign_dict in_msg_body tmpdict pubkey f n _18
+          ADD	//  sign_dict in_msg_body tmpdict pubkey f n
+        }>ELSE<{
+          s3 s4 XCHG
+          s1 s3 XCHG
+          DROP	//  sign_dict in_msg_body tmpdict pubkey f n
+        }>
+      }>ELSE<{
+        s3 s4 XCHG
+        s1 s3 XCHG
+        s0 s2 XCHG
+        DROP	//  sign_dict in_msg_body tmpdict pubkey f n
+      }>
+      SWAP	//  sign_dict in_msg_body tmpdict pubkey n f
+      NOT	//  sign_dict in_msg_body tmpdict pubkey n _21
+      s1 s3 XCHG	//  sign_dict in_msg_body n pubkey tmpdict _21
+    }>	//  sign_dict in_msg_body n pubkey tmpdict
+    NIP
+    s2 POP
+    s2 POP	//  n tmpdict
+    SWAP	//  tmpdict n
+  }>
+  ~merge_sign_dict PROC:<{
+    //  a a_count b
+    //  a n b
+    -1 PUSHINT	//  a n b pubkey=-1
+    UNTIL:<{
+      8 PUSHPOW2	//  a n b pubkey _8=256
+      s2 PUSH
+      SWAP	//  a n b pubkey b _8=256
+      DICTUGETNEXT
+      NULLSWAPIFNOT
+      NULLSWAPIFNOT	//  a n b cs pubkey f
+      DUP	//  a n b cs pubkey f f
+      IF:<{	//  a n b cs pubkey f
+        9 PUSHPOW2	//  a n b cs pubkey f _12=512
+        s1 s3 XCHG	//  a n b f pubkey cs _12=512
+        LDSLICEX	//  a n b f pubkey _22 _21
+        DROP	//  a n b f pubkey signature
+        s1 s5 XCHG
+        s5 PUSH
+        SWAP	//  pubkey n b f a pubkey signature
+        ~push_sign_dict CALLDICT	//  pubkey n b f a _14
+        s1 s4 XCHG	//  pubkey a b f n _14
+        ADD	//  pubkey a b f n
+      }>ELSE<{
+        s1 s5 XCHG
+        s1 s4 XCHG
+        s0 s2 XCHG
+        DROP	//  pubkey a b f n
+      }>
+      SWAP	//  pubkey a b n f
+      NOT	//  pubkey a b n _17
+      s3 s4 XCHG
+      s1 s3 XCHG	//  a n b pubkey _17
+    }>	//  a n b pubkey
+    DROP
+    DROP	//  a n
+  }>
+  send_internal_message PROC:<{
+    //  msg
+    DUP	//  msg msg
+    ISNULL	//  msg _2
+    100 THROWIF
+    3 PUSHINT	//  msg _4=3
+    SENDRAWMSG
+  }>
+  is_cell_equal PROC:<{
+    //  a b
+    SWAP	//  b a
+    CTOS	//  b _3
+    SWAP	//  _3 b
+    CTOS	//  _3 _4
+    SDLEXCMP	//  i
+    -1 EQINT	//  _7
+    IFJMP:<{	// 
+      TRUE	//  _8
+    }>	// 
+    FALSE	//  _9
+  }>
+  recv_external PROC:<{
+    //  in_msg
+    DUP	//  in_msg in_msg
+    4 PLDU	//  in_msg _2
+    0 EQINT	//  in_msg _4
+    IFJMP:<{	//  in_msg
+      DROP	// 
+      ACCEPT
+    }>	//  in_msg
+    get_perst_data CALLDICT	//  in_msg cur_seqno pk_count min_agree_count pk_dict order_dict
+    s0 s5 XCHG	//  order_dict cur_seqno pk_count min_agree_count pk_dict in_msg
+    unpack_in_msg CALLDICT	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature sign_dict in_msg_body
+    DUP	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature sign_dict in_msg_body in_msg_body
+    unpack_in_msg_body CALLDICT	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature sign_dict in_msg_body msg_seqno expiration_time pk message_body
+    s7 PUSH
+    s2 PUSH	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature sign_dict in_msg_body msg_seqno expiration_time pk message_body pk_dict pk
+    get_pk? CALLDICT	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature sign_dict in_msg_body msg_seqno expiration_time pk message_body _103 _104
+    NIP	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature sign_dict in_msg_body msg_seqno expiration_time pk message_body pkst
+    103 THROWIFNOT
+    s4 PUSH	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature sign_dict in_msg_body msg_seqno expiration_time pk message_body in_msg_body
+    HASHSU	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature sign_dict in_msg_body msg_seqno expiration_time pk message_body _32
+    s7 PUSH
+    s3 PUSH	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature sign_dict in_msg_body msg_seqno expiration_time pk message_body _32 signature pk
+    CHKSIGNU	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature sign_dict in_msg_body msg_seqno expiration_time pk message_body _33
+    104 THROWIFNOT
+    s11 PUSH
+    s4 PUSH	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature sign_dict in_msg_body msg_seqno expiration_time pk message_body order_dict msg_seqno
+    get_order? CALLDICT	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature sign_dict in_msg_body msg_seqno expiration_time pk message_body orderi orderst
+    s1 s7 XCHG
+    s0 s6 XCHG	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature orderi orderst msg_seqno expiration_time pk message_body sign_dict in_msg_body
+    check_sign_dict CALLDICT	//  order_dict cur_seqno pk_count min_agree_count pk_dict signature orderi orderst msg_seqno expiration_time pk message_body sign_dictn sign_dictn_count
+    s1 s2 XCHG
+    s1 s3 XCHG
+    s0 s8 XCHG	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn_count orderi orderst msg_seqno expiration_time message_body sign_dictn pk signature
+    ~push_sign_dict CALLDICT	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn_count orderi orderst msg_seqno expiration_time message_body sign_dictn _41
+    s1 s7 XCHG	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn orderi orderst msg_seqno expiration_time message_body sign_dictn_count _41
+    ADD	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn orderi orderst msg_seqno expiration_time message_body sign_dictn_count
+    FALSE	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn orderi orderst msg_seqno expiration_time message_body sign_dictn_count is_save_order
+    s0 s5 XCHG	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn orderi is_save_order msg_seqno expiration_time message_body sign_dictn_count orderst
+    IF:<{	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn orderi is_save_order msg_seqno expiration_time message_body sign_dictn_count
+      s0 s5 XCHG	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body orderi
+      unpack_order CALLDICT	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body _111 _112 _113 _114 _115
+      DROP
+      NIP	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body cur_expiration_time cur_message_body cur_sign_dict
+      s0 s2 XCHG
+      s4 PUSH	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body cur_sign_dict cur_message_body cur_expiration_time expiration_time
+      EQUAL	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body cur_sign_dict cur_message_body _53
+      105 THROWIFNOT
+      s2 PUSH
+      SWAP	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body cur_sign_dict message_body cur_message_body
+      is_cell_equal CALLDICT	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body cur_sign_dict _56
+      106 THROWIFNOT
+      s2 s6 XCHG
+      s1 s5 XCHG	//  order_dict cur_seqno pk_count min_agree_count pk_dict expiration_time message_body is_save_order msg_seqno sign_dictn sign_dictn_count cur_sign_dict
+      ~merge_sign_dict CALLDICT	//  order_dict cur_seqno pk_count min_agree_count pk_dict expiration_time message_body is_save_order msg_seqno sign_dictn sign_dictn_count
+      ACCEPT
+      DUP
+      s8 PUSH	//  order_dict cur_seqno pk_count min_agree_count pk_dict expiration_time message_body is_save_order msg_seqno sign_dictn sign_dictn_count sign_dictn_count min_agree_count
+      GEQ	//  order_dict cur_seqno pk_count min_agree_count pk_dict expiration_time message_body is_save_order msg_seqno sign_dictn sign_dictn_count _61
+      IF:<{	//  order_dict cur_seqno pk_count min_agree_count pk_dict expiration_time message_body is_save_order msg_seqno sign_dictn sign_dictn_count
+        s4 PUSH	//  order_dict cur_seqno pk_count min_agree_count pk_dict expiration_time message_body is_save_order msg_seqno sign_dictn sign_dictn_count message_body
+        send_internal_message CALLDICT
+        s0 s10 XCHG
+        s2 PUSH	//  sign_dictn_count cur_seqno pk_count min_agree_count pk_dict expiration_time message_body is_save_order msg_seqno sign_dictn order_dict msg_seqno
+        ~del_order_from_dict CALLDICT	//  sign_dictn_count cur_seqno pk_count min_agree_count pk_dict expiration_time message_body is_save_order msg_seqno sign_dictn order_dict
+      }>ELSE<{	//  order_dict cur_seqno pk_count min_agree_count pk_dict expiration_time message_body is_save_order msg_seqno sign_dictn sign_dictn_count
+        s3 POP	//  order_dict cur_seqno pk_count min_agree_count pk_dict expiration_time message_body sign_dictn_count msg_seqno sign_dictn
+        TRUE	//  order_dict cur_seqno pk_count min_agree_count pk_dict expiration_time message_body sign_dictn_count msg_seqno sign_dictn is_save_order
+        s3 s10 XCHG
+        s0 s3 XCHG	//  sign_dictn_count cur_seqno pk_count min_agree_count pk_dict expiration_time message_body is_save_order msg_seqno sign_dictn order_dict
+      }>
+    }>ELSE<{	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn orderi is_save_order msg_seqno expiration_time message_body sign_dictn_count
+      s5 POP	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body
+      s2 PUSH
+      s10 PUSH	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body msg_seqno cur_seqno
+      EQUAL	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body _67
+      102 THROWIFNOT
+      ACCEPT
+      s4 PUSH
+      s8 PUSH	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body sign_dictn_count min_agree_count
+      GEQ	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body _70
+      IF:<{	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body
+        DUP	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body message_body
+        send_internal_message CALLDICT
+      }>ELSE<{	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body
+        s3 POP	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count message_body msg_seqno expiration_time
+        TRUE	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count message_body msg_seqno expiration_time is_save_order
+        s0 s3 XCHG	//  order_dict cur_seqno pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time message_body
+      }>
+      s0 s9 XCHG	//  order_dict message_body pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time cur_seqno
+      INC	//  order_dict message_body pk_count min_agree_count pk_dict sign_dictn sign_dictn_count is_save_order msg_seqno expiration_time cur_seqno
+      s4 s10 XCHG
+      s0 s9 XCHG
+      s1 s5 XCHG
+      s0 s4 XCHG	//  sign_dictn_count cur_seqno pk_count min_agree_count pk_dict expiration_time message_body is_save_order msg_seqno sign_dictn order_dict
+    }>
+    s0 s3 XCHG	//  sign_dictn_count cur_seqno pk_count min_agree_count pk_dict expiration_time message_body order_dict msg_seqno sign_dictn is_save_order
+    -1 EQINT	//  sign_dictn_count cur_seqno pk_count min_agree_count pk_dict expiration_time message_body order_dict msg_seqno sign_dictn _76
+    IF:<{	//  sign_dictn_count cur_seqno pk_count min_agree_count pk_dict expiration_time message_body order_dict msg_seqno sign_dictn
+      0 PUSHINT	//  sign_dictn_count cur_seqno pk_count min_agree_count pk_dict expiration_time message_body order_dict msg_seqno sign_dictn _78=0
+      s3 s6 XCHG
+      s2 s5 XCHG
+      s2 s4 XCHG
+      s2 s3 XCHG
+      s2 s10 XCHG	//  pk_dict cur_seqno pk_count min_agree_count order_dict msg_seqno expiration_time message_body sign_dictn_count sign_dictn _78=0
+      ~set_order_to_dict CALLDICT	//  pk_dict cur_seqno pk_count min_agree_count order_dict
+    }>ELSE<{
+      s5 s9 XCHG
+      s2 s5 XCHG
+      DROP
+      DROP
+      DROP
+      DROP
+      DROP	//  pk_dict cur_seqno pk_count min_agree_count order_dict
+    }>
+    NEWC	//  pk_dict cur_seqno pk_count min_agree_count order_dict _80
+    s1 s4 XCHG	//  pk_dict order_dict pk_count min_agree_count cur_seqno _80
+    32 STU	//  pk_dict order_dict pk_count min_agree_count _82
+    s1 s2 XCHG	//  pk_dict order_dict min_agree_count pk_count _82
+    32 STU	//  pk_dict order_dict min_agree_count _84
+    32 STU	//  pk_dict order_dict _86
+    s1 s2 XCHG	//  order_dict pk_dict _86
+    STDICT	//  order_dict _87
+    STDICT	//  _88
+    ENDC	//  _89
+    c4 POP
+  }>
+  recv_internal PROC:<{
+    //  in_msg
+    DROP	// 
+  }>
+  seqnom PROC:<{
+    // 
+    c4 PUSH	//  _0
+    CTOS	//  _1
+    32 PLDU	//  _3
+  }>
+  pending_orders_all PROC:<{
+    // 
+    get_perst_data CALLDICT	//  _8 _9 _10 _11 _12
+    NIP
+    NIP
+    NIP
+    NIP	//  order_dict
+    DUP	//  order_dict order_dict
+    ISNULL	//  order_dict _6
+    IFJMP:<{	//  order_dict
+      DROP	// 
+      NEWDICT	//  _7
+    }>	//  order_dict
+  }>
+  pending_orders PROC:<{
+    //  pk signed
+    get_perst_data CALLDICT	//  pk signed _46 _47 _48 _49 _50
+    NIP
+    NIP
+    NIP
+    NIP	//  pk signed order_dict
+    DUP	//  pk signed order_dict order_dict
+    ISNULL	//  pk signed order_dict _8
+    IFJMP:<{	//  pk signed order_dict
+      DROP
+      DROP
+      DROP	// 
+      NEWDICT	//  _9
+    }>	//  pk signed order_dict
+    NEWDICT	//  pk signed order_dict l
+    -1 PUSHINT	//  pk signed order_dict l it_seqno=-1
+    UNTIL:<{
+      32 PUSHINT	//  pk signed order_dict l it_seqno _16=32
+      s3 PUSH
+      SWAP	//  pk signed order_dict l it_seqno order_dict _16=32
+      DICTUGETPREV
+      NULLSWAPIFNOT
+      NULLSWAPIFNOT	//  pk signed order_dict l fs it_seqno f
+      DUP	//  pk signed order_dict l fs it_seqno f f
+      IF:<{	//  pk signed order_dict l fs it_seqno f
+        s0 s2 XCHG	//  pk signed order_dict l f it_seqno fs
+        unpack_order CALLDICT	//  pk signed order_dict l f it_seqno _54 _55 _56 _57 _58
+        DROP
+        NIP	//  pk signed order_dict l f it_seqno expiration_time message_body sign_dict
+        s8 PUSH	//  pk signed order_dict l f it_seqno expiration_time message_body sign_dict pk
+        get_pk? CALLDICT	//  pk signed order_dict l f it_seqno expiration_time message_body _59 _60
+        NIP	//  pk signed order_dict l f it_seqno expiration_time message_body t
+        DUP	//  pk signed order_dict l f it_seqno expiration_time message_body t t
+        -1 EQINT	//  pk signed order_dict l f it_seqno expiration_time message_body t _28
+        s8 PUSH	//  pk signed order_dict l f it_seqno expiration_time message_body t _28 signed
+        -1 EQINT	//  pk signed order_dict l f it_seqno expiration_time message_body t _28 _30
+        AND	//  pk signed order_dict l f it_seqno expiration_time message_body t _31
+        IF:<{	//  pk signed order_dict l f it_seqno expiration_time message_body t
+          s3 PUSH
+          s3 PUSH
+          s10 PUSH
+          s4 PUSH	//  pk signed order_dict l f it_seqno expiration_time message_body t it_seqno expiration_time pk message_body
+          pack_in_msg_body CALLDICT	//  pk signed order_dict l f it_seqno expiration_time message_body t _33
+          32 PUSHINT	//  pk signed order_dict l f it_seqno expiration_time message_body t _33 _34=32
+          s1 s2 XCHG
+          s5 PUSH
+          s0 s2 XCHG
+          s1 s8 XCHG
+          s0 s8 XCHG	//  pk signed order_dict t f it_seqno expiration_time message_body _33 it_seqno l _34=32
+          DICTUSETB	//  pk signed order_dict t f it_seqno expiration_time message_body l
+        }>ELSE<{
+          s0 s5 XCHG	//  pk signed order_dict t f it_seqno expiration_time message_body l
+        }>
+        s0 s5 XCHG	//  pk signed order_dict l f it_seqno expiration_time message_body t
+        0 EQINT	//  pk signed order_dict l f it_seqno expiration_time message_body _37
+        s7 PUSH	//  pk signed order_dict l f it_seqno expiration_time message_body _37 signed
+        0 EQINT	//  pk signed order_dict l f it_seqno expiration_time message_body _37 _39
+        AND	//  pk signed order_dict l f it_seqno expiration_time message_body _40
+        IF:<{	//  pk signed order_dict l f it_seqno expiration_time message_body
+          s2 PUSH
+          s0 s2 XCHG
+          SWAP
+          s8 PUSH
+          SWAP	//  pk signed order_dict l f it_seqno it_seqno expiration_time pk message_body
+          pack_in_msg_body CALLDICT	//  pk signed order_dict l f it_seqno _42
+          32 PUSHINT	//  pk signed order_dict l f it_seqno _42 _43=32
+          s1 s2 XCHG
+          OVER
+          s1 s5 XCHG
+          s0 s5 XCHG	//  pk signed order_dict it_seqno f _42 it_seqno l _43=32
+          DICTUSETB	//  pk signed order_dict it_seqno f l
+        }>ELSE<{
+          s2 s4 XCHG
+          DROP
+          DROP	//  pk signed order_dict it_seqno f l
+        }>
+      }>ELSE<{
+        s1 s3 XCHG
+        s0 s2 XCHG
+        DROP	//  pk signed order_dict it_seqno f l
+      }>
+      SWAP	//  pk signed order_dict it_seqno l f
+      NOT	//  pk signed order_dict it_seqno l _45
+      s1 s2 XCHG	//  pk signed order_dict l it_seqno _45
+    }>	//  pk signed order_dict l it_seqno
+    DROP
+    NIP
+    NIP
+    NIP	//  l
+  }>
+}END>c

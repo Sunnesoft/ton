@@ -1,0 +1,66 @@
+#!/usr/bin/env fift -s
+"TonUtil.fif" include
+"SCUtil.fif" include
+"Asm.fif" include
+
+{ ."usage: " @' $0 type ." <workchain-id> <min-agree-count> <filename-pbk-list> <filename-pk> [<filename-wallet>] " cr
+  ."Creates a new multi-signature wallet <filename-wallet> in specified workchain <workchain-id>, " cr
+  ."with private key loaded from <filename-pk>.pk and owner's public keys list from <filename-pbk-list>.pbk." cr 
+  ."You need at least <min-agree-count> signatures for allow transaction" 
+  ."On defaults: <filename-wallet> = new-multisig-wallet" cr 1 halt
+} : usage
+$# 5 - ' usage if
+
+$1 parse-workchain-id =: wc    // set workchain id from command line argument
+$2 parse-int =: min-agree
+$3 =: pbkfilename-base   
+$4 =: pkfilename-base  
+def? $5 { @' $5 } { "new-multisig-wallet" } cond constant file-base
+
+."Creating new multi-signature wallet in workchain " wc . cr
+
+dictnew pbkfilename-base +".pbk" load-pbk 
+dup
+pbk-count
+dup
+
+min-agree < { abort"incorrect <min-agree-count> value" } if
+
+// Create new wallet
+"multisig-wallet-code.fif" include // code
+
+// data
+<b 0 32 u,
+2 roll 32 u,
+min-agree 32 u,
+2 roll dict,
+dictnew dict, 
+b> 
+
+null // no libraries
+
+<b b{0011} s, // 0 no split_depth, 0 no special, 1 code just, 1 data just
+3 roll ref, // source code
+rot ref, // data
+swap dict, // libraries
+b>  // create StateInit
+
+// dup ."StateInit: " <s csr. cr 
+dup hashu wc swap 2dup 2constant wallet_addr 
+."new wallet address = " 2dup .addr cr
+2dup file-base +".addr" save-address-verbose
+."Non-bounceable address (for init): " 2dup 7 .Addr cr
+."Bounceable address (for later access): " 6 .Addr cr
+
+<b b{1000100} s, // 10 ext in info, 00 src none, 10 dest std, 0 no anycast
+wallet_addr addr, 
+b{000010} s, // 0000 fee 0, 1 init just, 0 state init left
+swap <s s, // StateInit
+b{0} s, 
+0 4 u,
+b>
+
+// dup ."External message for initialization is " <s csr. cr
+2 boc+>B // dup Bx. cr
+file-base +"-query.boc" tuck B>file
+."(Saved wallet creating query to file " type .")" cr

@@ -1,0 +1,277 @@
+(slice, int) get_pk?(dict, pk) {
+	return dict.udict_get?(256,pk);
+}
+
+(slice, int) get_order?(dict, it_seqno) {
+	return dict.udict_get?(32,it_seqno);
+}
+
+_ unpack_order(order) {
+	var od = order;
+	var res = (od~load_uint(32), od~load_ref(), od~load_uint(32), od~load_dict(), od~load_int(1));
+	return res;
+}
+
+builder pack_orderb(expiration_time, message_body, sign_count, sign_dict, status) {
+	return begin_cell()
+		.store_uint(expiration_time, 32)
+		.store_ref(message_body)
+		.store_uint(sign_count, 32)
+		.store_dict(sign_dict)
+		.store_int(status, 1);
+}
+
+cell pack_order(expiration_time, message_body, sign_count, sign_dict, status) {
+	return pack_orderb(expiration_time, message_body, sign_count, sign_dict, status).end_cell();
+}
+
+_ ~set_order_to_dict(dict, it_seqno, expiration_time, message_body, sign_count, sign_dict, status) {
+	var order = pack_orderb(expiration_time, message_body, sign_count, sign_dict, status);
+	dict~udict_set_builder(32,it_seqno,order);
+	return (dict, ());
+}
+
+_ ~del_order_from_dict(dict, it_seqno) {
+	dict~udict_delete?(32,it_seqno);
+	return (dict, ());
+}
+
+() update_perst_data(it_seqno,pk_count,min_agree_count,pk_dict,order_dict) {
+	return set_data(begin_cell()
+		.store_uint(it_seqno,32)
+		.store_uint(pk_count,32)
+		.store_uint(min_agree_count,32)
+		.store_dict(pk_dict)
+		.store_dict(order_dict)
+		.end_cell());
+}
+
+_ get_perst_data() {
+	var ds = get_data().begin_parse();
+	var res = (ds~load_uint(32), ds~load_uint(32), ds~load_uint(32), ds~load_dict(), ds~load_dict());
+	ds.end_parse();
+	return res;	
+}
+
+_ unpack_in_msg(slice in_msg) {
+	var od = in_msg; 
+	return (od~load_bits(512), 
+			od~load_dict(), 
+			od~load_ref().begin_parse());	
+}
+
+_ unpack_in_msg_body(slice in_msg) {
+	var od = in_msg; 
+	return (od~load_uint(32), 
+			od~load_uint(32), 
+			od~load_uint(256), 
+			od~load_ref());	
+}
+
+builder pack_in_msg_body(it_seqno, expiration_time, pk, message_body) {
+	return begin_cell()
+		.store_uint(it_seqno,32)
+		.store_uint(expiration_time,32)
+		.store_uint(pk,256)
+		.store_ref(message_body);
+}
+
+_ ~push_sign_dict(sign_dict,pk,signature) {
+	var (v,f) = sign_dict~udict_set_get_builder?(256, pk, begin_cell().store_slice(signature));
+	
+	if(f) {
+		return (sign_dict,(1));
+	}
+
+	return (sign_dict,(0));
+}
+
+(cell,int) check_sign_dict(sign_dict, in_msg_body) {
+	int n = 0;
+	var pubkey = -1;
+	var tmpdict = new_dict();
+
+	do {
+		(pubkey, var cs, var f) = sign_dict.udict_get_next?(256, pubkey);
+
+		if (f) {
+			var signature = cs~load_bits(512);
+
+			if(check_signature(slice_hash(in_msg_body), signature, pubkey)) {		
+				n += tmpdict~push_sign_dict(pubkey, signature);   	
+			}
+		}
+	} until (~ f);
+
+	return (tmpdict,n);
+}
+
+_ ~merge_sign_dict(a, a_count, b) {
+	int n = a_count;
+	var pubkey = -1;
+
+	do {
+		(pubkey, var cs, var f) = b.udict_get_next?(256, pubkey);
+		if (f) {
+			var signature = cs~load_bits(512);		
+			n += a~push_sign_dict(pubkey, signature); 
+		}
+	} until (~ f);
+
+	return (a,(n));
+}
+
+() send_internal_message(msg) impure {
+	throw_if(100,msg.null?());
+	return send_raw_message(msg, 3);
+}
+
+int is_cell_equal(a,b) impure {
+	int i = is_slice_equal(a.begin_parse(),b.begin_parse());
+
+	if(i == -1) { return true; }
+	else { return false; }
+}
+
+() recv_external(slice in_msg) impure {
+	if (in_msg.preload_uint(4) == 0) {
+		accept_message();
+		return();
+	}
+
+	var (cur_seqno,pk_count,min_agree_count,pk_dict,order_dict) = get_perst_data();
+	var msg_seqno = -1;
+	var cur_time = 0; ;; now();
+	var is_data_change = false;
+
+	;; do {
+	;; 	(msg_seqno, var cs, var f) = order_dict.udict_get_next?(32, msg_seqno);
+	;; 	if (f) {
+	;; 		var (cur_expiration_time, cur_message_body, cur_sign_count, cur_sign_dict, cur_status) = cs.unpack_order();
+	;; 		if((cur_expiration_time < cur_time) | (cur_status == 1)) {
+	;; 			order_dict~del_order_from_dict(msg_seqno);
+	;; 			is_data_change = true;
+	;; 		}	
+	;; 	}
+	;; } until (~ f);
+;; 
+	;; if(is_data_change){
+	;; 	set_data(begin_cell()
+	;; 			.store_uint(cur_seqno,32)
+	;; 			.store_uint(pk_count,32)
+	;; 			.store_uint(min_agree_count,32)
+	;; 			.store_dict(pk_dict)
+	;; 			.store_dict(order_dict)
+	;; 			.end_cell());
+	;; }
+
+	var (signature, sign_dict, in_msg_body) = in_msg.unpack_in_msg();
+	(msg_seqno, var expiration_time, var pk, var message_body) = in_msg_body.unpack_in_msg_body();
+	
+	;; throw_if(101,expiration_time <= cur_time);
+
+	var (pki,pkst) = pk_dict.get_pk?(pk);
+	
+	throw_unless(103, pkst);
+	throw_unless(104, check_signature(slice_hash(in_msg_body), signature, pk));
+
+	var (orderi,orderst) = order_dict.get_order?(msg_seqno);
+	var (sign_dictn,sign_dictn_count) = sign_dict.check_sign_dict(in_msg_body);
+	sign_dictn_count += sign_dictn~push_sign_dict(pk,signature);
+
+	var is_save_order = false;
+
+	if(orderst) {
+		var (cur_expiration_time, cur_message_body, cur_sign_count, cur_sign_dict, cur_status) = orderi.unpack_order();
+		;; throw_if(101,cur_expiration_time <= cur_time);
+		throw_unless(105,cur_expiration_time == expiration_time);
+		throw_unless(106,is_cell_equal(message_body,cur_message_body));
+
+		sign_dictn_count = sign_dictn~merge_sign_dict(sign_dictn_count,cur_sign_dict);
+
+		accept_message();
+
+		if(sign_dictn_count >= min_agree_count) {
+			send_internal_message(message_body);
+			order_dict~del_order_from_dict(msg_seqno);
+		} else {
+			is_save_order = true;	
+		}	
+
+	} else {
+		throw_unless(102, msg_seqno == cur_seqno);
+
+		accept_message();
+
+		if(sign_dictn_count >= min_agree_count) {
+			send_internal_message(message_body);
+		} else {
+			is_save_order = true;	
+		}
+
+		cur_seqno = cur_seqno + 1;		
+	}
+
+	if(is_save_order == true){
+		order_dict~set_order_to_dict(msg_seqno, expiration_time, message_body, sign_dictn_count, sign_dictn, 0);
+	}
+
+	;; return update_perst_data(cur_seqno,pk_count,min_agree_count,pk_dict,order_dict);
+
+	return set_data(begin_cell()
+		.store_uint(cur_seqno,32)
+		.store_uint(pk_count,32)
+		.store_uint(min_agree_count,32)
+		.store_dict(pk_dict)
+		.store_dict(order_dict)
+		.end_cell());
+}
+
+() recv_internal(slice in_msg) impure {
+	;; do nothing for internal messages
+}
+
+;; Get methods
+
+int seqnom() method_id {
+	return get_data().begin_parse().preload_uint(32);
+} 
+
+_ pending_orders_all() method_id {
+	var (cur_seqno,pk_count,min_agree_count,pk_dict,order_dict) = get_perst_data();
+
+	if (order_dict.null?()) {
+		return new_dict();
+	}
+
+	return order_dict;
+}
+
+_ pending_orders(int pk, int signed) method_id {
+	var (cur_seqno,pk_count,min_agree_count,pk_dict,order_dict) = get_perst_data();
+
+	if (order_dict.null?()) {
+		return new_dict();
+	}
+
+	var l = new_dict();
+	var it_seqno = -1;
+	do {
+		(it_seqno, var fs, var f) = order_dict.udict_get_prev?(32, it_seqno);
+		if (f) {
+			var (expiration_time, message_body, sign_count, sign_dict, status) = fs.unpack_order();
+
+			var (ts,t) = sign_dict.get_pk?(pk);
+			if((t == true) & (signed == true)) {
+				l~udict_set_builder(32,it_seqno,pack_in_msg_body(it_seqno, expiration_time, pk, message_body));
+			}
+
+			if((t == false) & (signed == false)) {
+				l~udict_set_builder(32,it_seqno,pack_in_msg_body(it_seqno, expiration_time, pk, message_body));
+			}
+		}
+	} until (~ f);
+
+	return l;	
+}
+

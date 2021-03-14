@@ -1,0 +1,67 @@
+#!/usr/bin/env fift -s
+"TonUtil.fif" include
+"SCUtil.fif" include
+"Asm.fif" include
+
+{ ."usage: " @' $0 type ." <src-addr> <pk> <dest-addr> <seqno> <timeout> <amount> <out-boc>" cr
+  ." " cr 1 halt
+} : usage
+$# 6 - ' usage if
+
+true constant bounce
+
+$1 =: src-file-base
+@' $2 +".pk" load-cryptokey =: wallet_pk
+$3 bounce parse-load-address =: bounce 2=: dest_addr
+$4 parse-int =: seqno
+$5 parse-int =: timeout
+$6 $>GR =: amount
+
+src-file-base +".addr" load-address 2dup 2constant wallet_addr
+."Source wallet address = " 2dup .addr cr 6 .Addr cr
+
+."Transferring " amount .GR ."to account "
+dest_addr 2dup bounce 7 + .Addr ." = " .addr 
+."seqno=0x" seqno x. ."bounce=" bounce . cr
+  
+// create a message
+<b b{01} s, // int_msg_info$0 ihr_disabled:Bool
+bounce 1 i, 
+b{000100} s, // 000 -?, 10 dest addr_std, 0 no anycast
+dest_addr addr, 
+amount Gram, 
+0 9 64 32 + + 1+ u, // zeros: 1 extra_curr, 4 ihr, 4 fwd, 64 lt, 32 at, 1 init
+0 2 u, // 0 body left, 0 body
+b>
+
+<b seqno 32 u, 
+now timeout + 32 u,
+wallet_pk priv>pub B, 
+swap ref, // internal message
+b>
+
+dup hashu wallet_pk ed25519_sign_uint
+<b swap B, // Signature 
+dictnew dict, // signatures list
+swap ref, // Body
+b> <s
+
+// data
+<b 0 32 u,
+3 32 u,
+2 32 u,
+dictnew "keyc.pbk" load-pbk dict,
+dictnew dict, 
+b> 
+
+"multisig-wallet-code.fif" include 
+
+<s // mes data codes
+-1 // mes data codes -1
+swap // mes data -1 codes
+2 roll // mes -1 codes data
+.s runvm 
+
+<s 
+dup 32 u@ .s
+

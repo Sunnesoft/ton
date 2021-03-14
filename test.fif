@@ -1,0 +1,27 @@
+#!/usr/bin/env fift -s
+"TonUtil.fif" include
+"Asm.fif" include
+
+{ ."usage: " @' $0 type ." <workchain-id> [<filename-base>]" cr
+  ."Creates a new wallet in specified workchain, with private key saved to or loaded from <filename-base>.pk" cr
+  ."('new-wallet.pk' by default)" cr 1 halt
+} : usage
+$# 1- -2 and ' usage if
+
+$1 parse-workchain-id =: wc    // set workchain id from command line argument
+def? $2 { @' $2 } { "new-wallet" } cond constant file-base
+
+."Creating " file-base type ." in workchain " wc . cr
+
+<{ 
+SETCP0 
+DUP 
+IFNOTRET 
+	DUP 85143 INT EQUAL IFJMP:<{ // "seqno" get-method
+	     DROP c4 PUSHCTR CTOS 32 PLDU  // cnt
+	   }>
+}>c dup dup <s 85143 swap rot .s runvm .s
+
+<{ 239 17 * INT }>s dup csr. runvmcode .s 2drop
+
+.s
